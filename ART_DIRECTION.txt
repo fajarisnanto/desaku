@@ -1,0 +1,10 @@
+ARTWORK PROVENANCE
+Built-in image_gen tool used to generate assets/village.png on 2026-10-29.
+Original conversation was read; its image attachments were not accessible.
+Character Edition replaces the initial procedural artwork with transparent character images adapted from the user's supplied lineup. See CHARACTER_ART.txt for character prompts and provenance.
+
+FINAL BACKGROUND PROMPT
+Use case: stylized-concept. Asset type: static background for playable Godot isometric 2D fantasy village. Create a beautiful landscape 1536x1024 illustration, modern smooth hand-painted SNES inspired RPG art, richly detailed miniature architecture, warm daylight, emerald trees, teal slate roofs, cream stone, flowers. Entire village seen from elevated near-isometric camera, no people, no characters, no text or labels. Layout essential: enormous EMPTY walkable pale cobblestone plaza occupies middle 65 percent width from x=25% to75% and y=38% to88%, buildings ONLY at outer edges. At exact center x50% y60% place a small round turquoise fountain basin, diameter 10% image width, no tall statue, water will be animated by game. Grand town hall centered at top x50% y22%, creative cottage left x15% y40%, research observatory right x86% y38%, operation guild left x13% y67%, maintenance workshop right x88% y69%, cozy pub at lower left corner, park at lower right corner. Wide paths connect their entrances to central open plaza. Edge landscaping gardens trees lamps benches, keep plaza clear of props except center fountain. Village fills frame with attractive lush forest borders, no sky, no UI. Polished indie game background, soft painterly textures, sharp readable architecture, smooth edges not blocky pixelation.
+
+IMPLEMENTATION NOTES
+Navigation and water overlay were aligned to the actual generated image, whose fountain center is near (768,548). The plaza is spacious and dominant; the brief's "4x bigger" is interpreted visually because the original village image and measurements were unavailable.

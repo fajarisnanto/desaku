@@ -1,0 +1,43 @@
+SOCIAL EDITION VALIDATION — 2026-10-29
+
+Engine: Godot 4.7.2 stable, Windows x86_64, OpenGL Compatibility.
+Source import and Windows release export: PASS.
+Embedded PCK executable; no runtime scripting dependencies required.
+
+NAVIGATION: PASS
+Ten simulated minutes, 60,000 position checks, zero violations, 712 graph nodes.
+Governor: zero journeys (human, stationary).
+Creative: 41 journeys; Research: 43; Operation: 45; Maintenance: 49.
+
+SOCIAL SIMULATION: PASS in source and exported executable
+Ten simulated minutes of proximity conversations plus manual-message checks.
+30 conversations; 67 lines, including the explicit human test exchange.
+No autonomous Governor movement or dialogue.
+Walkable line-of-sight prevents conversations across the fountain.
+Social opt-out prevents new spontaneous encounters.
+Manual Governor message is preserved and routed to the selected resident.
+
+API INTEGRATION: PASS against disposable localhost mock HTTP server
+Real Godot HTTPRequest transport and JSON serialization exercised.
+Valid authenticated request and parsed reply.
+401 authentication error, malformed/empty output, timeout, redirect rejected.
+Missing model / remote plaintext URL rejected before network calls.
+Offline and human modes make no requests.
+Settings reload; malformed fields keep defaults; Governor cannot get an AI profile.
+Session-only API key is absent from saved JSON.
+Six expected mock requests, no unintended redirect requests.
+No real provider or live LLM was contacted; none was configured by the user.
+
+UI FLOW: PASS
+Independent per-resident drafts and saved personalities.
+Offline Test button feedback and session-key handling.
+Modal keyboard guard and human-message routing.
+
+EXPORTED RENDERING: PASS, exit 0, empty stderr
+settings-preview.png: exported settings menu rendered and inspected.
+preview.png: exported proximity greeting, bubble and human Governor inspected.
+Character art remains the reference-based assets from Character Edition.
+
+Local Drive copy and ZIP integrity are checked during packaging.
+SHA256SUMS.txt lists hashes of the delivered project files.
+Google Drive cloud-upload completion has not been verified.

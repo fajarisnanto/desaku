@@ -1,0 +1,9 @@
+.godot/
+build/
+release-assets/
+__pycache__/
+*.pyc
+*.tmp
+.env
+.env.*
+residents.json
