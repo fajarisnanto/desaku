@@ -94,7 +94,10 @@ func begin(a: Node2D, b: Node2D, human_text := "") -> void:
 		say(a,human_text,"Human","")
 	else:
 		var greetings := [greeting()+", "+str(b.role)+"! ","Hi, "+str(b.role)+"! ","Hey, "+str(b.role)+"! Nice to see you. "]
-		say(a,str(greetings[randi_range(0,greetings.size()-1)])+str(REPLIES[a.role][0]),"Offline","Scripted greeting")
+		var fallback := str(greetings[randi_range(0,greetings.size()-1)])+str(REPLIES[a.role][0])
+		pending = true
+		ticket += 1
+		service.request_line(a.role,"You just met "+str(b.role)+" near the village fountain. Greet them and start a friendly conversation in your own personality. It is "+greeting().to_lower()+" time in Jakarta.",fallback,ticket)
 
 func say(npc: Node2D, text: String, source: String, detail: String) -> void:
 	for other in village.residents:

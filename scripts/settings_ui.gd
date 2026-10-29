@@ -15,6 +15,8 @@ var draft_keys: Dictionary = {}
 var provider: OptionButton
 var endpoint: LineEdit
 var model: LineEdit
+var reply_timeout: SpinBox
+var reasoning: OptionButton
 var api_key: LineEdit
 var key_env: LineEdit
 var personality: TextEdit
@@ -111,8 +113,23 @@ func build() -> void:
 	caption("Full chat-completions endpoint URL",Vector2(330,198),window)
 	endpoint = field(Vector2(330,224),860,window)
 	caption("Model name (as listed by your server)",Vector2(330,278),window)
-	model = field(Vector2(330,304),860,window)
-	model.placeholder_text = "Enter an installed local model or your provider's model ID"
+	model = field(Vector2(330,304),410,window)
+	model.placeholder_text = "Model ID from your server"
+	caption("Timeout (seconds)",Vector2(760,278),window)
+	reply_timeout = SpinBox.new()
+	reply_timeout.min_value = 5
+	reply_timeout.max_value = 180
+	reply_timeout.step = 1
+	reply_timeout.position = Vector2(760,304)
+	reply_timeout.size = Vector2(165,39)
+	window.add_child(reply_timeout)
+	caption("Thinking",Vector2(945,278),window)
+	reasoning = OptionButton.new()
+	reasoning.add_item("Provider default")
+	reasoning.add_item("Off (Qwen / Ollama)")
+	reasoning.position = Vector2(945,304)
+	reasoning.size = Vector2(245,39)
+	window.add_child(reasoning)
 	caption("API key — optional, kept only until you quit",Vector2(330,356),window)
 	api_key = field(Vector2(330,382),405,window)
 	api_key.secret = true
@@ -156,7 +173,7 @@ func build() -> void:
 	load_role()
 
 func snapshot() -> Dictionary:
-	return {"mode":provider.selected,"endpoint":endpoint.text.strip_edges(),"model":model.text.strip_edges(),"key_env":key_env.text.strip_edges(),"personality":personality.text.substr(0,4000),"social":social_toggle.button_pressed}
+	return {"mode":provider.selected,"endpoint":endpoint.text.strip_edges(),"model":model.text.strip_edges(),"key_env":key_env.text.strip_edges(),"personality":personality.text.substr(0,4000),"social":social_toggle.button_pressed,"timeout_seconds":int(reply_timeout.value),"reasoning_effort":"none" if reasoning.selected == 1 else ""}
 
 func stash() -> void:
 	drafts[selected] = snapshot()
@@ -172,6 +189,8 @@ func load_role() -> void:
 	provider.select(int(p.mode))
 	endpoint.text = str(p.endpoint)
 	model.text = str(p.model)
+	reply_timeout.value = float(p.get("timeout_seconds",12))
+	reasoning.select(1 if str(p.get("reasoning_effort","")) == "none" else 0)
 	key_env.text = str(p.key_env)
 	personality.text = str(p.personality)
 	social_toggle.button_pressed = bool(p.social)
@@ -185,6 +204,10 @@ func load_role() -> void:
 func toggle_settings() -> void:
 	shade.visible = not shade.visible
 	if shade.visible:
+		# Refresh externally saved profiles; retain deliberate unsaved edits.
+		if not service.test_mode:
+			service.load_settings()
+		load_role()
 		human_panel.visible = false
 		village.gallery.visible = false
 	else:

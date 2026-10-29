@@ -33,6 +33,8 @@ func run() -> void:
 	p.model = "mock-village"
 	p.endpoint = base+"/v1/chat/completions"
 	p.personality = "Friendly creative personality."
+	p.timeout_seconds = 90
+	p.reasoning_effort = "none"
 	check(service.save_profile("Creative",p,"test-session-key") == OK,"Save profile failed")
 	var saved := FileAccess.get_file_as_string(service.config_path)
 	check(not "test-session-key" in saved,"Session key leaked into persisted settings")
@@ -40,6 +42,7 @@ func run() -> void:
 	service.reset_defaults()
 	service.load_settings()
 	check(service.profiles.Creative.personality == p.personality and service.profiles.Creative.model == "mock-village","Settings did not survive reload")
+	check(service.profiles.Creative.timeout_seconds == 90 and service.profiles.Creative.reasoning_effort == "none","Qwen options did not survive reload")
 	check(service.save_profile("Governor",p,"test-session-key") == ERR_INVALID_PARAMETER,"Governor accepted AI configuration")
 	var result := await ask(p)
 	check(result[3] == "API" and result[2] == "Hello, neighbor! Shall we take a walk?","Successful API response was not parsed")

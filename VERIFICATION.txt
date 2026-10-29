@@ -1,4 +1,4 @@
-SOCIAL EDITION VALIDATION — 2026-10-29
+QWEN EDITION v0.3.0 VALIDATION — 2026-10-29
 
 Engine: Godot 4.7.2 stable, Windows x86_64, OpenGL Compatibility.
 Source import and Windows release export: PASS.
@@ -11,7 +11,7 @@ Creative: 41 journeys; Research: 43; Operation: 45; Maintenance: 49.
 
 SOCIAL SIMULATION: PASS in source and exported executable
 Ten simulated minutes of proximity conversations plus manual-message checks.
-30 conversations; 67 lines, including the explicit human test exchange.
+27 conversations; 62 lines, including the explicit human test exchange.
 No autonomous Governor movement or dialogue.
 Walkable line-of-sight prevents conversations across the fountain.
 Social opt-out prevents new spontaneous encounters.
@@ -26,7 +26,11 @@ Offline and human modes make no requests.
 Settings reload; malformed fields keep defaults; Governor cannot get an AI profile.
 Session-only API key is absent from saved JSON.
 Six expected mock requests, no unintended redirect requests.
-No real provider or live LLM was contacted; none was configured by the user.
+Live local Ollama qwen3:8b: all four resident role tests passed (0.649–0.925 seconds).
+Live generated opening greeting: PASS.
+100% GPU allocation observed on AMD RX 6900 XT.
+All four API profiles and custom traits verified in the Windows UI.
+Navigation, social, mock API, and UI regression suites rerun and passed before release.
 
 UI FLOW: PASS
 Independent per-resident drafts and saved personalities.

@@ -22,6 +22,8 @@ class Handler(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))))
             assert body["model"] == "mock-village"
             assert body["stream"] is False
+
+            assert body["reasoning_effort"] == "none"
             assert "Creative" in body["messages"][0]["content"]
             assert body["messages"][1]["content"] == "A neighbor says hello."
         except (ValueError, KeyError, AssertionError):

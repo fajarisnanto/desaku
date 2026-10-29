@@ -1,6 +1,6 @@
 # Desaku
 
-**Fountain Commons — Social Edition**
+**Fountain Commons — Qwen Edition (v0.3.0)**
 
 [Download the Windows build](https://github.com/fajarisnanto/desaku/releases/latest)
 
@@ -31,7 +31,7 @@ The Governor remains at the Townhall approach and never wanders or generates spe
 
 1. Open **AI settings** and select a resident.
 2. Choose **Offline small talk** or **Chat-completions API**.
-3. For API mode, enter the **full endpoint URL**, **model ID**, and an API key if required. Different residents can use different endpoints, models and personalities.
+3. For API mode, enter the **full endpoint URL**, **model ID**, and an API key if required. Different residents can use different endpoints, models and personalities. Set the per-resident **Timeout** (5–180 seconds) for slower local models. **Thinking: Off** sends `reasoning_effort: "none"`; leave Provider default for other endpoints unless they support this field.
 4. Edit the personality. It is included in API requests; offline dialogue uses built-in role-specific lines.
 5. Use **Test this connection**. The result explicitly says API, Offline or Fallback. A test uses the currently displayed fields, even before saving.
 6. Choose **Save this resident**. Repeat for the other residents. Unsaved changes remain as drafts during this app session; each resident has a separate Save action.
@@ -42,9 +42,26 @@ The **Join nearby conversations** checkbox controls spontaneous conversations fo
 
 For an already running Ollama server, the endpoint is:
 
-`http://localhost:11434/v1/chat/completions`
+`http://127.0.0.1:11434/v1/chat/completions`
 
 Enter a model actually installed on your server. Local Ollama normally does not require a key. Other local servers implementing the same chat-completions JSON format can use their own full URL. This project does not install or download models.
+
+### Fast Qwen preset
+
+Install Ollama separately, then run `ollama pull qwen3:8b`. Close Desaku and run `presets/Import-QwenProfiles.ps1` in PowerShell to apply the bundled four-resident preset. It backs up existing settings before replacing these four profiles. Open Desaku again afterward. No model weights or credentials are included in the release.
+
+The preset uses `http://127.0.0.1:11434/v1/chat/completions`, Qwen 8B, Thinking Off, a 45-second timeout, and nearby conversations enabled. Using the explicit loopback address avoided a roughly 30-second localhost connection delay observed on the test PC.
+
+| Resident | Role and traits |
+| --- | --- |
+| Creative | Imaginative, empathetic artist; design, storytelling, festivals |
+| Research | Curious, careful scholar; evidence, discovery, clear explanations |
+| Operation | Calm, organized coordinator; priorities, supplies, teamwork |
+| Maintenance | Practical, observant mechanic; prevention, upkeep, safe troubleshooting |
+
+The Governor stays human-controlled. Personalities match the speaker's language, including Indonesian and English. These are dialogue traits, not actual tools or work-execution capabilities.
+
+On the tested RX 6900 XT, Ollama reported 100% GPU allocation for Qwen 8B. Warm role tests took approximately 0.6–0.9 seconds; initial loading took around 10 seconds in a separate test. Timing varies with hardware, prompt length, and load. Settings are reloaded when opening the menu, while existing unsaved drafts are retained.
 
 ### Hosted model API
 
@@ -56,15 +73,15 @@ The request includes `model`, `stream:false`, `max_tokens:96`, and system/user m
 
 Typed keys are masked and held in memory only until the game closes. To avoid retyping, set the named environment variable before launching the game (for example `VILLAGE_CREATIVE_API_KEY`). Each resident can use a different variable. A nonempty typed key takes precedence over its environment variable.
 
-Settings save to Godot's local app-data directory, normally `%APPDATA%\Godot\app_userdata\AI Village — Fountain Commons\residents.json`. That JSON stores endpoint, model, environment-variable name, personality and social preference, never the typed key. Runtime settings are not part of the distributed project or Drive copy.
+Settings save to Godot's local app-data directory, normally `%APPDATA%\Godot\app_userdata\AI Village — Fountain Commons\residents.json`. That JSON stores endpoint, model, environment-variable name, personality and social preference, never the typed key. Active runtime settings stay on each PC. The optional key-free preset in `presets/qwen-residents.json` provides the four role personalities for setup or restoration.
 
-Saving API mode enables automatic model calls during conversations. Requests send the configured personality and recent encounter dialogue, including human messages when applicable, to your chosen endpoint. Hosted providers may charge. The game uses at most one in-flight request, at least six seconds between starts, a twelve-second timeout, and a 64 KiB response limit. Requests do not follow redirects. HTTPS is required except for HTTP on localhost or 127.0.0.1.
+Saving API mode enables automatic model calls during conversations. Requests send the configured personality and recent encounter dialogue, including human messages when applicable, to your chosen endpoint. Hosted providers may charge. The game uses at most one in-flight request, at least six seconds between starts, a configurable per-resident timeout (12 seconds by default), and a 64 KiB response limit. Requests do not follow redirects. HTTPS is required except for HTTP on localhost or 127.0.0.1.
 
 ## Social behavior
 
 Neighbors within 145 scene pixels stop, face each other, and exchange up to three short lines. An unobstructed walkable line between them is required, so they cannot talk across the fountain. Encounters have a 55-second pair cooldown and a 16-second resident cooldown. One conversation happens at a time so bubbles remain readable.
 
-The initial greeting is scripted for an immediate response and varies between Hi, Hey and time-of-day greetings. The village greeting clock uses Jakarta time (UTC+7). Subsequent turns use each speaker's configured provider, with offline fallback on connection problems. The transcript marks **Offline**, **API**, **Fallback** or **Human**; fallback errors are shown without raw server response bodies.
+Opening greetings and subsequent turns use each speaker's configured provider, with scripted fallback on connection problems or request pacing. The village greeting clock uses Jakarta time (UTC+7). The transcript marks **Offline**, **API**, **Fallback** or **Human**; fallback errors are shown without raw server response bodies.
 
 When an AI meets the Governor, it greets you and waits briefly, then leaves; the game never invents your reply. **Speak as Governor** lets you address any resident directly, regardless of distance, and starts a short directed exchange. These messages are exactly your typed words, followed by the selected resident's response. No speech audio is included.
 
@@ -96,7 +113,7 @@ Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/t
 python tests/run_api_tests.py
 ```
 
-The last command uses a disposable local mock server and Python's standard library. It does not contact a real provider or use your API keys. Live hosted inference has not been tested because no provider configuration or credentials were supplied.
+The last command uses a disposable local mock server and Python's standard library. It does not contact a real provider or use your API keys. Live local Ollama inference, all four Qwen personalities, and a generated opening greeting were also tested. Hosted-provider inference has not been tested.
 
 ## Current scope
 

@@ -23,7 +23,7 @@ func _ready() -> void:
 func reset_defaults() -> void:
 	profiles.clear()
 	for role in ROLES:
-		profiles[role] = {"mode":0,"endpoint":"http://localhost:11434/v1/chat/completions","model":"","key_env":"VILLAGE_"+role.to_upper()+"_API_KEY","personality":PERSONALITIES[role],"social":true}
+		profiles[role] = {"mode":0,"endpoint":"http://localhost:11434/v1/chat/completions","model":"","key_env":"VILLAGE_"+role.to_upper()+"_API_KEY","personality":PERSONALITIES[role],"social":true,"timeout_seconds":12,"reasoning_effort":""}
 
 func normalized(role: String, data: Dictionary) -> Dictionary:
 	var p: Dictionary = profiles[role].duplicate()
@@ -34,6 +34,10 @@ func normalized(role: String, data: Dictionary) -> Dictionary:
 		p.mode = clampi(int(data.mode),0,1)
 	if data.get("social") is bool:
 		p.social = data.social
+	if data.get("timeout_seconds") is int or data.get("timeout_seconds") is float:
+		p.timeout_seconds = clampi(int(data.timeout_seconds),5,180)
+	if data.get("reasoning_effort") is String and data.reasoning_effort in ["","none"]:
+		p.reasoning_effort = data.reasoning_effort
 	return p
 
 func load_settings() -> void:
@@ -41,6 +45,7 @@ func load_settings() -> void:
 		return
 	var parsed = JSON.parse_string(FileAccess.get_file_as_string(config_path))
 	if not parsed is Dictionary:
+		push_warning("Could not read resident profiles from " + ProjectSettings.globalize_path(config_path))
 		return
 	for role in ROLES:
 		if parsed.get(role) is Dictionary:
@@ -103,7 +108,7 @@ func request_line(role: String, context: String, fallback: String, ticket: int, 
 		line_ready.emit(ticket,role,fallback,"Fallback","Invalid API key format.")
 		return
 	var request := HTTPRequest.new()
-	request.timeout = 12.0 if not test_mode else 1.0
+	request.timeout = float(p.timeout_seconds) if not test_mode else 1.0
 	request.body_size_limit = 65536
 	request.max_redirects = 0
 	add_child(request)
@@ -111,7 +116,10 @@ func request_line(role: String, context: String, fallback: String, ticket: int, 
 	if not key.is_empty():
 		headers.append("Authorization: Bearer "+key)
 	var system := "You are "+role+", an AI resident of Fountain Commons. "+str(p.personality)+" Reply as yourself in one friendly sentence, at most 22 words. Only dialogue; no role labels, narration, markdown or stage directions. Never write the Governor's words. The Governor is a human. Do not request or mention credentials. You have no tools and cannot take external actions."
-	var body := JSON.stringify({"model":p.model,"stream":false,"max_tokens":96,"messages":[{"role":"system","content":system},{"role":"user","content":context.substr(0,3500)}]})
+	var payload := {"model":p.model,"stream":false,"max_tokens":96,"messages":[{"role":"system","content":system},{"role":"user","content":context.substr(0,3500)}]}
+	if not str(p.reasoning_effort).is_empty():
+		payload.reasoning_effort = p.reasoning_effort
+	var body := JSON.stringify(payload)
 	busy = true
 	last_request_ms = Time.get_ticks_msec()
 	request.request_completed.connect(func(result: int, code: int, _headers: PackedStringArray, bytes: PackedByteArray):
