@@ -6,6 +6,7 @@ func _initialize() -> void:
 func run() -> void:
 	var scene = load("res://main.tscn").instantiate()
 	root.add_child(scene)
+	scene.office_world.test_mode = true
 	await process_frame
 	scene.set_process(false)
 	var ui = scene.settings_ui

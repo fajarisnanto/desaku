@@ -22,6 +22,8 @@ var gallery: Panel
 var ai_service: Node
 var social: Node
 var settings_ui: CanvasLayer
+var office_world: Node
+var office_ui: CanvasLayer
 var plaza := PackedVector2Array([Vector2(475,365),Vector2(680,350),Vector2(768,320),Vector2(895,357),Vector2(1060,365),Vector2(1190,470),Vector2(1160,650),Vector2(1050,755),Vector2(870,825),Vector2(650,825),Vector2(490,760),Vector2(385,650),Vector2(375,475)])
 
 func _ready() -> void:
@@ -51,6 +53,13 @@ func _ready() -> void:
 	settings_ui = SettingsUI.new()
 	add_child(settings_ui)
 	settings_ui.setup(self,ai_service,social)
+	office_world = load("res://scripts/office_world.gd").new()
+	add_child(office_world)
+	office_world.setup(ai_service,ai_service.test_mode or "--office-test" in OS.get_cmdline_user_args())
+	office_ui = load("res://scripts/office_ui.gd").new()
+	add_child(office_ui)
+	office_ui.setup(self,office_world)
+	tree_exiting.connect(func(): office_world.save_world())
 	if "--self-test" in OS.get_cmdline_user_args():
 		run_self_test()
 	if "--social-test" in OS.get_cmdline_user_args():
@@ -103,6 +112,8 @@ func simulate(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	if not paused and not settings_ui.is_modal_open():
+		office_world.tick(delta)
+	if not paused and not settings_ui.is_modal_open() and not office_ui.shade.visible:
 		elapsed += delta * time_scale
 		social.tick(delta * time_scale)
 		simulate(delta * time_scale)
@@ -116,7 +127,9 @@ func _process(delta: float) -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ESCAPE:
-			if settings_ui.shade.visible:
+			if office_ui.shade.visible:
+				office_ui.close()
+			elif settings_ui.shade.visible:
 				settings_ui.toggle_settings()
 			elif settings_ui.human_panel.visible:
 				settings_ui.toggle_human()
@@ -127,7 +140,12 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			return
 		if settings_ui.is_modal_open():
 			return
+		if office_ui.shade.visible:
+			if event.keycode == KEY_O:
+				office_ui.close()
+			return
 		match event.keycode:
+			KEY_O: office_ui.open()
 			KEY_S: settings_ui.toggle_settings()
 			KEY_G: settings_ui.toggle_human()
 			KEY_L: settings_ui.log_panel.visible = not settings_ui.log_panel.visible
@@ -167,11 +185,11 @@ func build_ui() -> void:
 	var title := panel(Vector2(25,25),Vector2(343,105),ui)
 	label("F O U N T A I N   C O M M O N S",Vector2(18,15),18,title)
 	label("An AI village",Vector2(18,39),29,title)
-	label("STAGE 02   /   SOCIAL VILLAGE",Vector2(19,78),12,title,Color("9fbdba"))
+	label("STAGE 03   /   LIVING OFFICES",Vector2(19,78),12,title,Color("9fbdba"))
 	var footer := panel(Vector2(25,934),Vector2(1486,65),ui)
 	status = label("",Vector2(20,10),17,footer)
 	label("Four AI neighbors. You are the Governor.",Vector2(20,36),13,footer,Color("9fbdba"))
-	label("S settings  G speak  C portraits  SPACE pause  F11 full",Vector2(1010,25),12,footer,Color("bbcec7"))
+	label("O offices  S settings  G speak  SPACE pause  F11 full",Vector2(1010,25),12,footer,Color("bbcec7"))
 	for i in 5:
 		label("●  " + ROLES[i],Vector2(430+i*113,26),14,footer,COLORS[i].lightened(0.4))
 	var names := ["TOWNHALL","CREATIVE","RESEARCH","OPERATION","MAINTENANCE","THE LANTERN PUB","GARDEN"]
@@ -180,6 +198,14 @@ func build_ui() -> void:
 		var width := font.get_string_size(names[i],HORIZONTAL_ALIGNMENT_LEFT,-1,13).x + 24
 		var plaque := panel(locations[i]-Vector2(width/2,0),Vector2(width,27),ui)
 		label(names[i],Vector2(12,4),13,plaque)
+		if i in [1,2,3,4]:
+			var office_role: String = ROLES[i]
+			plaque.mouse_filter = Control.MOUSE_FILTER_STOP
+			plaque.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+			plaque.gui_input.connect(func(event: InputEvent):
+				if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+					office_ui.open(office_role)
+			)
 	gallery = panel(Vector2(48,160),Vector2(1440,705),ui)
 	gallery.visible = false
 	label("THE RESIDENTS OF FOUNTAIN COMMONS",Vector2(35,26),27,gallery)

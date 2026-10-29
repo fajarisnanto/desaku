@@ -1,6 +1,7 @@
 extends Node
 
 signal line_ready(ticket: int, role: String, text: String, source: String, detail: String)
+signal plan_ready(ticket: int, role: String, plan: Dictionary, detail: String)
 const ROLES = ["Creative", "Research", "Operation", "Maintenance"]
 const PERSONALITIES = {
 	"Creative": "You are a cheerful artist. Notice colors, share playful ideas, and ask about others' day.",
@@ -85,7 +86,23 @@ func validation_error(p: Dictionary) -> String:
 		return "Enter the model name provided by your server."
 	return ""
 
-func request_line(role: String, context: String, fallback: String, ticket: int, override_profile: Dictionary = {}, override_key: String = "") -> void:
+func request_plan(role: String, context: String, ticket: int) -> void:
+	if not role in ROLES:
+		plan_ready.emit(ticket,role,{},"Only resident office teams may plan.")
+		return
+	if int(profiles[role].mode) != 1:
+		plan_ready.emit(ticket,role,{},"Connect this resident to an AI provider to enable office decisions.")
+		return
+	var issue := validation_error(profiles[role])
+	if not issue.is_empty():
+		plan_ready.emit(ticket,role,{},issue)
+		return
+	if busy or (not test_mode and Time.get_ticks_msec()-last_request_ms < 6000):
+		plan_ready.emit(ticket,role,{},"Waiting for the shared AI connection.")
+		return
+	request_line(role,context,"",ticket,{},"",true)
+
+func request_line(role: String, context: String, fallback: String, ticket: int, override_profile: Dictionary = {}, override_key: String = "", planning := false) -> void:
 	# The human Governor is deliberately excluded at the service boundary.
 	if not role in ROLES:
 		line_ready.emit(ticket,role,"","Human","The Governor speaks only through your input.")
@@ -105,7 +122,10 @@ func request_line(role: String, context: String, fallback: String, ticket: int, 
 	if key.is_empty() and not str(p.key_env).is_empty():
 		key = OS.get_environment(str(p.key_env))
 	if "\n" in key or "\r" in key:
-		line_ready.emit(ticket,role,fallback,"Fallback","Invalid API key format.")
+		if planning:
+			plan_ready.emit(ticket,role,{},"Invalid API key format.")
+		else:
+			line_ready.emit(ticket,role,fallback,"Fallback","Invalid API key format.")
 		return
 	var request := HTTPRequest.new()
 	request.timeout = float(p.timeout_seconds) if not test_mode else 1.0
@@ -117,6 +137,9 @@ func request_line(role: String, context: String, fallback: String, ticket: int, 
 		headers.append("Authorization: Bearer "+key)
 	var system := "You are "+role+", an AI resident of Fountain Commons. "+str(p.personality)+" Reply as yourself in one friendly sentence, at most 22 words. Only dialogue; no role labels, narration, markdown or stage directions. Never write the Governor's words. The Governor is a human. Do not request or mention credentials. You have no tools and cannot take external actions."
 	var payload := {"model":p.model,"stream":false,"max_tokens":96,"messages":[{"role":"system","content":system},{"role":"user","content":context.substr(0,3500)}]}
+	if planning:
+		payload.max_tokens = 420
+		payload.messages = [{"role":"system","content":"You are "+role+", an autonomous office team in a fantasy village. "+str(p.personality)+" You may only choose the simulated actions in the supplied catalog. Prioritize wellbeing, useful work, comfortable space, and teamwork. Return ONE JSON object, no markdown. Never claim real-world actions. The Governor is human and cannot be recruited."},{"role":"user","content":context.substr(0,12000)}]
 	if not str(p.reasoning_effort).is_empty():
 		payload.reasoning_effort = p.reasoning_effort
 	var body := JSON.stringify(payload)
@@ -129,9 +152,22 @@ func request_line(role: String, context: String, fallback: String, ticket: int, 
 			var reason := "API unavailable (HTTP %d). Using offline dialogue." % code
 			if result == HTTPRequest.RESULT_TIMEOUT:
 				reason = "API timed out. Using offline dialogue."
-			line_ready.emit(ticket,role,fallback,"Fallback",reason)
+			if planning:
+				plan_ready.emit(ticket,role,{},reason.replace("Using offline dialogue.","Office decision deferred."))
+			else:
+				line_ready.emit(ticket,role,fallback,"Fallback",reason)
 			return
 		var data = JSON.parse_string(bytes.get_string_from_utf8())
+		if planning:
+			var plan: Dictionary = {}
+			if data is Dictionary and data.get("choices") is Array and not data.choices.is_empty():
+				var choice = data.choices[0]
+				if choice is Dictionary and choice.get("message") is Dictionary:
+					var raw = JSON.parse_string(str(choice.message.get("content","")))
+					if raw is Dictionary:
+						plan = raw
+			plan_ready.emit(ticket,role,plan,"Qwen decision" if not plan.is_empty() else "Invalid plan; no changes made.")
+			return
 		var answer := extract_answer(data)
 		if answer.is_empty():
 			line_ready.emit(ticket,role,fallback,"Fallback","API returned no usable dialogue.")
@@ -142,7 +178,10 @@ func request_line(role: String, context: String, fallback: String, ticket: int, 
 	if err != OK:
 		busy = false
 		request.queue_free()
-		line_ready.emit(ticket,role,fallback,"Fallback","Could not start API request.")
+		if planning:
+			plan_ready.emit(ticket,role,{},"Could not start office planning request.")
+		else:
+			line_ready.emit(ticket,role,fallback,"Fallback","Could not start API request.")
 
 func extract_answer(data: Variant) -> String:
 	if not data is Dictionary or not data.get("choices") is Array or data.choices.is_empty():

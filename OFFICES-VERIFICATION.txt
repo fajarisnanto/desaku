@@ -1,0 +1,21 @@
+LIVING OFFICES v0.4.0 PREVIEW — 2026-10-30
+
+Before the no-launch instruction:
+- Office regression: PASS (construction, metrics, recruitment, recruited builder, pause, persistence, invalid plans).
+- Existing social simulation: PASS after office integration.
+- Live Qwen: 12 furnishing decisions across four roles accepted; role-specific stations and sequential free positions selected.
+- Office cutaway screenshot rendered and visually inspected.
+
+After the no-launch instruction:
+- Compiler-only checks of changed scripts: PASS. No scene execution.
+- Fixes include reserved/duplicate recruit names, malformed-save preservation, planning error handling, three-desk capacity and periodic/exit saving.
+- Latest regression changes have NOT been executed.
+- Final Windows preview has NOT been launched.
+- Live model recruitment and recruited-agent planning remain unverified end to end.
+
+Planned follow-up checks (only when game execution is authorized):
+1. Run tests/test_offices.gd, tests/test_ui.gd, API integration and existing navigation/social suites.
+2. Live Qwen selects recruitment after workspace prerequisites; recruited specialist takes a planning turn.
+3. Exported preview starts, opens all four offices, constructs, pauses, quits and restores construction/team state.
+
+Do not treat this preview as a validated stable release.
