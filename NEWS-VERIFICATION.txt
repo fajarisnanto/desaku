@@ -1,0 +1,5 @@
+WORLD NEWS v0.4.1 PREVIEW
+Four public endpoints returned valid RSS or CISA JSON in an external Python connectivity check.
+Changed GDScript passes compiler-only checks. Windows export is prepared without running the game.
+NOT RUN: tests/test_news.gd, in-game feed retrieval, visual review, live Qwen news conversation.
+No game was launched during this work. This is an unvalidated preview, not a stable release.

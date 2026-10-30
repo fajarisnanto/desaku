@@ -14,6 +14,8 @@ var ticket := 0
 var transcript := ""
 var conversation_count := 0
 var enabled := true
+var news_feed: Node
+var story: Dictionary = {}
 const REPLIES = {
 	"Creative": ["The fountain light is lovely today. Shall I paint something for our next village gathering?","A splash of color always helps. What has inspired you lately?","I'd love that! Let's swap ideas at the Lantern Pub later."],
 	"Research": ["I've been reading by the fountain. Have you noticed how peaceful the water sounds?","That's a lovely thought. A short walk often brings my best ideas.","I'd enjoy that! I'll bring a curious story from my latest book."],
@@ -90,6 +92,15 @@ func begin(a: Node2D, b: Node2D, human_text := "") -> void:
 	pending = false
 	timer = 5.5
 	transcript = ""
+	story = {}
+	if news_feed != null and (not human_text.is_empty() or conversation_count%2 == 0):
+		var news_query := human_text.to_lower()
+		var wants_news := human_text.is_empty()
+		for word in ["news","berita","cve","hack","hacking","ai","security","cyber","teknologi"]:
+			if word in news_query.split(" "):
+				wants_news = true
+		if wants_news:
+			story = news_feed.select_story(b.role if a.role == "Governor" else a.role,human_text)
 	if not human_text.is_empty():
 		say(a,human_text,"Human","")
 	else:
@@ -97,7 +108,10 @@ func begin(a: Node2D, b: Node2D, human_text := "") -> void:
 		var fallback := str(greetings[randi_range(0,greetings.size()-1)])+str(REPLIES[a.role][0])
 		pending = true
 		ticket += 1
-		service.request_line(a.role,"You just met "+str(b.role)+" near the village fountain. Greet them and start a friendly conversation in your own personality. It is "+greeting().to_lower()+" time in Jakarta.",fallback,ticket)
+		service.request_line(a.role,"You just met "+str(b.role)+" near the village fountain. Greet them and start a friendly conversation in your own personality. It is "+greeting().to_lower()+" time in Jakarta."+news_context(),fallback,ticket)
+
+func news_context() -> String:
+	return news_feed.context_for(story) if news_feed != null else ""
 
 func say(npc: Node2D, text: String, source: String, detail: String) -> void:
 	for other in village.residents:
@@ -119,7 +133,7 @@ func advance_conversation() -> void:
 	ticket += 1
 	var fallback: String = REPLIES[speaker.role][step]
 	var context := "You are speaking with "+str(listener.role)+" near the village fountain. It is "+greeting().to_lower()+" time in Jakarta. Continue this friendly small talk, responding to the last line:\n"+transcript
-	service.request_line(speaker.role,context,fallback,ticket)
+	service.request_line(speaker.role,context+news_context(),fallback,ticket)
 
 func receive_line(id: int, role: String, text: String, source: String, detail: String) -> void:
 	if id != ticket or not pending or active.is_empty():
@@ -128,6 +142,9 @@ func receive_line(id: int, role: String, text: String, source: String, detail: S
 	var speaker = active[step%2]
 	if speaker.role != role:
 		return
+	if source == "API" and not story.is_empty() and news_feed != null and news_feed.enabled:
+		detail = str(story.source)+" · "+Time.get_datetime_string_from_unix_time(int(story.published)).left(10)+" · "+str(story.url)
+		source = "API / News"
 	say(speaker,text,source,detail)
 	timer = 6.5
 

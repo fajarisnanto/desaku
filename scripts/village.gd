@@ -24,6 +24,8 @@ var social: Node
 var settings_ui: CanvasLayer
 var office_world: Node
 var office_ui: CanvasLayer
+var news_feed: Node
+var news_ui: CanvasLayer
 var plaza := PackedVector2Array([Vector2(475,365),Vector2(680,350),Vector2(768,320),Vector2(895,357),Vector2(1060,365),Vector2(1190,470),Vector2(1160,650),Vector2(1050,755),Vector2(870,825),Vector2(650,825),Vector2(490,760),Vector2(385,650),Vector2(375,475)])
 
 func _ready() -> void:
@@ -59,6 +61,13 @@ func _ready() -> void:
 	office_ui = load("res://scripts/office_ui.gd").new()
 	add_child(office_ui)
 	office_ui.setup(self,office_world)
+	news_feed = load("res://scripts/news_feed.gd").new()
+	add_child(news_feed)
+	news_feed.setup(ai_service.test_mode or "--script" in OS.get_cmdline_args())
+	social.news_feed = news_feed
+	news_ui = load("res://scripts/news_ui.gd").new()
+	add_child(news_ui)
+	news_ui.setup(self,news_feed)
 	tree_exiting.connect(func(): office_world.save_world())
 	if "--self-test" in OS.get_cmdline_user_args():
 		run_self_test()
@@ -111,9 +120,9 @@ func simulate(delta: float) -> void:
 		npc.advance(delta)
 
 func _process(delta: float) -> void:
-	if not paused and not settings_ui.is_modal_open():
+	if not paused and not settings_ui.is_modal_open() and not news_ui.shade.visible:
 		office_world.tick(delta)
-	if not paused and not settings_ui.is_modal_open() and not office_ui.shade.visible:
+	if not paused and not settings_ui.is_modal_open() and not office_ui.shade.visible and not news_ui.shade.visible:
 		elapsed += delta * time_scale
 		social.tick(delta * time_scale)
 		simulate(delta * time_scale)
@@ -127,7 +136,9 @@ func _process(delta: float) -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ESCAPE:
-			if office_ui.shade.visible:
+			if news_ui.shade.visible:
+				news_ui.close()
+			elif office_ui.shade.visible:
 				office_ui.close()
 			elif settings_ui.shade.visible:
 				settings_ui.toggle_settings()
@@ -140,11 +151,16 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			return
 		if settings_ui.is_modal_open():
 			return
+		if news_ui.shade.visible:
+			if event.keycode == KEY_N:
+				news_ui.close()
+			return
 		if office_ui.shade.visible:
 			if event.keycode == KEY_O:
 				office_ui.close()
 			return
 		match event.keycode:
+			KEY_N: news_ui.open()
 			KEY_O: office_ui.open()
 			KEY_S: settings_ui.toggle_settings()
 			KEY_G: settings_ui.toggle_human()

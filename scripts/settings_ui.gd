@@ -262,6 +262,8 @@ func add_log(role: String, text: String, source: String, detail: String) -> void
 	log_lines.append(role+" ["+source+"]: "+text.substr(0,130))
 	if not detail.is_empty() and source == "Fallback":
 		log_lines.append("Connection: "+detail)
+	if source == "API / News":
+		log_lines.append("Source: "+detail)
 	while log_lines.size() > 2:
 		log_lines.pop_front()
 	log_text.text = "\n".join(log_lines)

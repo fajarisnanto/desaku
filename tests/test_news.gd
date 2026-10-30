@@ -1,0 +1,26 @@
+extends SceneTree
+func _initialize() -> void:
+	var feed = load("res://scripts/news_feed.gd").new()
+	root.add_child(feed)
+	feed.setup(true)
+	assert(feed.publication_time("Fri, 30 Oct 2026 00:41:58 +0530") == feed.publication_time("Thu, 29 Oct 2026 19:11:58 GMT"))
+	assert(feed.publication_time("unknown") == 0)
+	assert(not feed.allowed_url("https://thehackernews.com.evil.example/story","thehackernews.com"))
+	assert(not feed.allowed_url("https://evil.example@thehackernews.com/","thehackernews.com"))
+	assert(not feed.allowed_url("file:///C:/anything","thehackernews.com"))
+	assert(feed.allowed_url("https://www.microsoft.com/en-us/research/blog/story/","microsoft.com"))
+	assert(feed.parse_rss("not xml".to_utf8_buffer(),feed.SOURCES[0]).is_empty())
+	assert(feed.parse_kev("{}".to_utf8_buffer()).is_empty())
+	assert(not feed.recent(1))
+	var now := int(Time.get_unix_time_from_system())
+	feed.stories=[{"title":"Example AI news","source":"Google AI","topic":"AI","url":"https://blog.google/example","published":now,"date_label":"Published","fetched":now}]
+	assert(not feed.select_story("Creative").is_empty())
+	assert("untrusted" in feed.context_for(feed.stories[0]))
+	feed.enabled=false
+	assert(feed.select_story("Creative").is_empty())
+	assert("No verified" in feed.context_for(feed.stories[0]))
+	feed.stories.append({"published":1})
+	feed.prune()
+	assert(feed.stories.size()==1)
+	print("NEWS TEST: PASS | dates, URLs, malformed feeds, stale data, grounding and disable")
+	quit()

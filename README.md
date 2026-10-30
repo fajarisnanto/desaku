@@ -1,6 +1,6 @@
 # Desaku
 
-**Fountain Commons — Living Offices (v0.4.0 preview)**
+**Fountain Commons — Living Offices + World News (v0.4.1 preview)**
 
 [Download the Windows build](https://github.com/fajarisnanto/desaku/releases/latest)
 
@@ -16,6 +16,7 @@ Download the Windows ZIP from Releases, extract it, and open `AI Village.exe`. G
 
 ## Controls
 
+- **N / News desk**: inspect recent IT headlines, dates, source links and feed status; enable/disable news or refresh.
 - **O / Offices**: view a department interior, team, construction and decision journal. Building nameplates also open their office.
 - **S / AI settings**: configure Creative, Research, Operation and Maintenance separately.
 - **G / Speak as Governor**: choose a recipient, type your own message, and send it. Enter also sends.
@@ -101,6 +102,18 @@ Decisions and reasons appear in the journal. Plans cannot execute code, access f
 Office state is stored separately from AI profiles in `user://offices.json`, including completed furnishings, teammates and in-progress construction. It autosaves every ten active seconds, on decisions/completion, and on normal exit. An unreadable save is preserved and disables office saving/autonomy for that session. The first-stage interiors are procedural isometric cutaways; freeform asset generation, arbitrary buildings, village-wide construction and external worker tools are not included.
 
 **Preview validation:** earlier construction/persistence regression and live Qwen furnishing tests passed. The latest code passed compiler-only checks and export. The final preview executable and latest regression changes have not been run, at the user's request. Live model recruitment and a recruited teammate's planning turn still need end-to-end verification.
+
+## IT news conversations (preview)
+
+The shared news desk retrieves public feed metadata from The Hacker News, Microsoft Research, Google AI, and CISA's Known Exploited Vulnerabilities catalog. Feed requests run at startup and every 30 minutes while the app is open. Manual refresh is limited to once per minute. Each request has an 18-second timeout and 3 MB response limit. No API key is needed, and no village conversations are sent to news publishers.
+
+Only dated entries from the last 14 days are eligible. Residents may discuss news on alternating spontaneous encounters. Messages from the Governor containing words such as news, berita, CVE, hacking, AI, security or cyber can select relevant headlines. Creative favors AI/design, Maintenance and Operation favor security/CVEs, and Research can discuss either. A chosen story remains attached to the encounter, and generated news dialogue is marked `API / News` with its source reference.
+
+Press **N** to see each headline's publisher, date, retrieval time and original link. The **Read original source** button opens the browser only when clicked. News may be disabled in this panel. Settings and bounded headline metadata are stored in `user://village_news.json`; old or undated entries are excluded. Failed refreshes keep eligible dated cache entries and show an unavailable status. When no recent evidence exists, residents are instructed to acknowledge that instead of inventing breaking news.
+
+Only headline metadata is passed to Qwen, not full articles. It is instructed to attribute reports, separate opinion, and avoid inventing exploit details, CVSS values, affected versions or fixes. CISA dates are explicitly marked **added to KEV**, not CVE disclosure dates. These are selected international feeds, not complete global coverage; verify important details at the original source. Model adherence is not guaranteed.
+
+The public feeds were checked successfully outside the game. Compiler-only checks passed. In-game network retrieval, parser regression execution, visual layout and live news dialogue have not been run for this preview, respecting the no-launch instruction.
 
 ## Open and rebuild
 
