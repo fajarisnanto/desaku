@@ -27,6 +27,8 @@ var office_ui: CanvasLayer
 var news_feed: Node
 var news_ui: CanvasLayer
 var hud: CanvasLayer
+var governor_target: Variant = null
+var governor_speed := 118.0
 var plaza := PackedVector2Array([Vector2(475,365),Vector2(680,350),Vector2(768,320),Vector2(895,357),Vector2(1060,365),Vector2(1190,470),Vector2(1160,650),Vector2(1050,755),Vector2(870,825),Vector2(650,825),Vector2(490,760),Vector2(385,650),Vector2(375,475)])
 
 func _ready() -> void:
@@ -130,6 +132,7 @@ func _process(delta: float) -> void:
 	if not paused and not settings_ui.is_modal_open() and not office_ui.shade.visible and not news_ui.shade.visible:
 		elapsed += delta * time_scale
 		social.tick(delta * time_scale)
+		move_governor(delta * time_scale)
 		simulate(delta * time_scale)
 	var walkers := 0
 	for npc in residents:
@@ -167,7 +170,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		match event.keycode:
 			KEY_N: news_ui.open()
 			KEY_O: office_ui.open()
-			KEY_S: settings_ui.toggle_settings()
+			KEY_F2: settings_ui.toggle_settings()
 			KEY_G: settings_ui.toggle_human()
 			KEY_L: settings_ui.log_panel.visible = not settings_ui.log_panel.visible
 			KEY_C: gallery.visible = not gallery.visible
@@ -177,6 +180,50 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				var full := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
 				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if full else DisplayServer.WINDOW_MODE_FULLSCREEN)
 			KEY_ESCAPE: get_tree().quit()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if paused or settings_ui.is_modal_open() or office_ui.shade.visible or news_ui.shade.visible or gallery.visible:
+			return
+		var destination := get_global_mouse_position()
+		if walkable(destination):
+			governor_target = destination
+			residents[0].route = PackedVector2Array()
+
+func move_governor(delta: float) -> void:
+	if residents.is_empty():
+		return
+	var governor = residents[0]
+	if governor.conversing:
+		governor.player_controlled = false
+		return
+	var axis := Vector2.ZERO
+	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT): axis.x -= 1.0
+	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT): axis.x += 1.0
+	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP): axis.y -= 1.0
+	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN): axis.y += 1.0
+	var movement := axis.normalized()
+	if movement != Vector2.ZERO:
+		governor_target = null
+		var next: Vector2 = governor.position + movement * governor_speed * delta
+		if walkable(next):
+			governor.position = next
+			governor.facing = signf(movement.x) if absf(movement.x) > 0.1 else governor.facing
+		governor.player_controlled = true
+		return
+	if governor_target is Vector2:
+		var offset: Vector2 = governor_target - governor.position
+		if offset.length() < 4.0:
+			governor_target = null
+			governor.player_controlled = false
+			return
+		var next: Vector2 = governor.position.move_toward(governor_target,governor_speed*delta)
+		if walkable(next):
+			governor.position = next
+			governor.facing = signf(offset.x) if absf(offset.x) > 0.1 else governor.facing
+			governor.player_controlled = true
+			return
+	governor.player_controlled = false
 
 func panel(pos: Vector2, size: Vector2, parent: Node) -> Panel:
 	var p := Panel.new()
@@ -211,7 +258,7 @@ func build_ui() -> void:
 	var footer := panel(Vector2(25,934),Vector2(1486,65),ui)
 	status = label("",Vector2(20,10),17,footer)
 	label("Four AI neighbors. You are the Governor.",Vector2(20,36),13,footer,Color("9fbdba"))
-	label("O offices  S settings  G speak  SPACE pause  F11 full",Vector2(1010,25),12,footer,Color("bbcec7"))
+	label("WASD / arrows move  click walks  O offices  F2 settings  G speak  SPACE pause  F11 full",Vector2(820,25),12,footer,Color("bbcec7"))
 	for i in 5:
 		label("●  " + ROLES[i],Vector2(430+i*113,26),14,footer,COLORS[i].lightened(0.4))
 	var names := ["TOWNHALL","CREATIVE","RESEARCH","OPERATION","MAINTENANCE","THE LANTERN PUB","GARDEN"]

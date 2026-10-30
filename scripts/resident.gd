@@ -12,6 +12,7 @@ var rest := 1.0
 var phase := 0.0
 var facing := 1.0
 var moving := false
+var player_controlled := false
 var journeys := 0
 var font := ThemeDB.fallback_font
 var visual: MeshInstance2D
@@ -116,7 +117,7 @@ func advance(delta: float) -> void:
 	speech_time = maxf(0.0,speech_time-delta)
 	if speech_time <= 0.0:
 		speech_panel.hide()
-	moving = not route.is_empty() and not conversing and role != "Governor"
+	moving = (not route.is_empty() and not conversing and role != "Governor") or (role == "Governor" and player_controlled and not conversing)
 	if moving:
 		var target := route[0]
 		var offset := target - position

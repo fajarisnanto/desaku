@@ -18,7 +18,7 @@ Download the Windows ZIP from Releases, extract it, and open `AI Village.exe`. G
 
 - **N / News desk**: inspect recent IT headlines, dates, source links and feed status; enable/disable news or refresh.
 - **O / Offices**: view a department interior, team, construction and decision journal. Building nameplates also open their office.
-- **S / AI settings**: configure Creative, Research, Operation and Maintenance separately.
+- **F2 / AI settings**: configure Creative, Research, Operation and Maintenance separately.
 - **G / Speak as Governor**: choose a recipient, type your own message, and send it. Enter also sends.
 - **C**: large character portrait gallery.
 - **L**: show/hide the recent conversation panel.
@@ -27,7 +27,7 @@ Download the Windows ZIP from Releases, extract it, and open `AI Village.exe`. G
 - **Tab**: navigation routes.
 - **Esc**: close an open panel; otherwise quit.
 
-The Governor remains at the Townhall approach and never wanders or generates speech. There is no Governor AI profile. The settings and human-message panels pause village simulation while open. There are no player movement controls in this stage.
+The Governor is human-controlled and can walk with WASD, arrow keys or left-click-to-move on the plaza. Nearby residents can greet you and respond when you approach. There is no Governor AI profile. The settings and human-message panels pause village simulation while open.
 
 ## Configure each AI resident
 
@@ -89,7 +89,7 @@ When an AI meets the Governor, it greets you and waits briefly, then leaves; the
 
 ## Autonomous offices
 
-Each of the four AI leads starts with an empty office and 100 materials. With a configured API provider, the team evaluates its workspace and chooses one simulated action: build a furnishing, recruit a specialist, or wait. A new planning request is attempted roughly every 12 seconds, rotating through eligible departments and respecting the shared AI connection. Offline residents do not generate office plans.
+Each of the four AI leads starts with an empty office and 100 materials. With a configured API provider, the team evaluates its workspace and chooses one simulated action: build a furnishing, recruit a specialist, record an independent future initiative, or wait. A new planning request is attempted roughly every 12 seconds, rotating through eligible departments and respecting the shared AI connection. Offline residents do not generate office plans.
 
 Press **O**, click **Offices**, or click a department nameplate to enter the office view. The village walk simulation pauses while viewing offices; office construction and decisions continue. The office autonomy toggle pauses all department development. Settings panels and the global Space pause also pause office ticks. Work proceeds only while the application is running; it does not progress in the background after quitting.
 
@@ -97,7 +97,7 @@ AI teams choose from a furnishing catalog and 12 floor positions. Creative has a
 
 Construction takes about 22 seconds before team bonuses. Materials regenerate at 0.16 per simulation second, capped at 140 per office. Teams may recruit up to three named specialists after completing two furnishings and providing a free teammate desk. Recruitment costs 20 materials and takes 16 seconds. Recruits rotate through AI planning turns with their own name and specialty, share the department model and budget, and speed construction by 30% per teammate. They appear inside the office using tinted department character art; they are not additional independently wandering village sprites yet.
 
-Decisions and reasons appear in the journal. Plans cannot execute code, access files or networks on their own, purchase resources, or create external accounts. The engine validates catalog items, positions, budget, specialties and team capacity before changing the simulation. Invalid responses spend nothing; the team retries later. Governor remains human-controlled and cannot be recruited.
+Decisions and reasons appear in the journal. Residents are encouraged to think beyond security: trade, local business, culture, religion, education, diplomacy, environmental care, history and peaceful conflict preparedness are valid themes. Plans cannot execute code, access files or networks on their own, purchase resources, or create external accounts. The engine validates catalog items, positions, budget, specialties and team capacity before changing the simulation. Invalid responses spend nothing; the team retries later. Governor remains human-controlled and cannot be recruited.
 
 Office state is stored separately from AI profiles in `user://offices.json`, including completed furnishings, teammates and in-progress construction. It autosaves every ten active seconds, on decisions/completion, and on normal exit. An unreadable save is preserved and disables office saving/autonomy for that session. The first-stage interiors are procedural isometric cutaways; freeform asset generation, arbitrary buildings, village-wide construction and external worker tools are not included.
 

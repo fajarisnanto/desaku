@@ -147,6 +147,8 @@ func request_decision(role: String) -> void:
 	var can_recruit: bool = office.items.size() >= 2 and desks > office.team.size() and office.team.size() < 3 and float(office.materials) >= 20
 	var mission: String = {"Creative":"Design art, stories and welcoming spaces","Research":"Investigate nature and share useful knowledge","Operation":"Coordinate supplies, schedules and community projects","Maintenance":"Maintain tools, paths, lamps and the fountain"}[role]
 	var prompt := "ACTOR: "+pending_actor+". Specialty: "+specialty+". MISSION: "+mission+".\nAssess your actual office below. Choose ONE improvement, explaining the unmet need. Prefer a department-specific station, comfortable surroundings and useful teamwork over duplicate furniture. If there is a specific job to delegate, prepare a desk then recruit. Recruits take their own planning turns and accelerate construction. You may wait when satisfied.\nCURRENT STATE: "+JSON.stringify({"materials":int(office.materials),"completed":office.items,"team":office.team,"wellbeing":metrics(role),"free_slots":free_slots,"recruitment_ready":can_recruit,"last_decision":office.last})+"\nAVAILABLE BUILD ITEMS (only these keys allowed): "+JSON.stringify(available(role))+"\nSPECIALTIES: "+JSON.stringify(SPECIALTIES[role])+"\nJSON fields for build: action=build, item=one available key, slot=one free_slots integer, reason=short specific reason. For recruit (only when recruitment_ready): action=recruit, name=short unique personal name, specialty=exact allowed specialty, reason=specific job. For wait: action=wait, reason=why. Recruitment costs 20 and needs a free desk. Maximum 3 teammates; Governor is never AI. Return only JSON. Do not reuse a completed item or occupied slot."
+	prompt += "\nINDEPENDENCE: You may propose future village initiatives involving trade, business, culture, faith, education, diplomacy, environmental care or peaceful conflict preparedness when the furnishing catalog cannot express the best idea. Use action=propose with a concrete reason; do not claim external actions."
+	prompt += "\nFor propose, return action=propose and a short concrete reason. For build/recruit/wait, follow the catalog and validation rules already described."
 	if available(role).is_empty() or free_slots.is_empty():
 		prompt += "\nIMPORTANT: This office cannot build any more furnishings. Choose recruit if recruitment_ready is true and a useful job exists; otherwise choose wait. Do not choose build."
 	service.request_plan(role,prompt,ticket)
@@ -188,6 +190,11 @@ func apply_plan(role: String, plan: Dictionary, actor: String) -> String:
 		office.last = actor+" is reflecting: "+reason
 		log_event(role,office.last)
 		retry_until[role] = Time.get_unix_time_from_system()+90
+		return ""
+	if action == "propose":
+		office.last = actor+" proposes: "+reason
+		log_event(role,office.last)
+		retry_until[role] = Time.get_unix_time_from_system()+45
 		return ""
 	var cost := 0
 	var duration := 0.0

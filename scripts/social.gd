@@ -108,7 +108,7 @@ func begin(a: Node2D, b: Node2D, human_text := "") -> void:
 		var fallback := str(greetings[randi_range(0,greetings.size()-1)])+str(REPLIES[a.role][0])
 		pending = true
 		ticket += 1
-		service.request_line(a.role,"You just met "+str(b.role)+" near the village fountain. Greet them and start a friendly conversation in your own personality. It is "+greeting().to_lower()+" time in Jakarta."+news_context(),fallback,ticket)
+		service.request_line(a.role,"You just met "+str(b.role)+" near the village fountain. Greet them and start a friendly conversation in your own personality. It is "+greeting().to_lower()+" time in Jakarta. Choose a natural topic from village life such as art, learning, trade, work, family, faith, culture, history, diplomacy, conflict, food or the environment; do not force a security topic."+news_context(),fallback,ticket)
 
 func news_context() -> String:
 	return news_feed.context_for(story) if news_feed != null else ""
@@ -132,7 +132,7 @@ func advance_conversation() -> void:
 	pending = true
 	ticket += 1
 	var fallback: String = REPLIES[speaker.role][step]
-	var context := "You are speaking with "+str(listener.role)+" near the village fountain. It is "+greeting().to_lower()+" time in Jakarta. Continue this friendly small talk, responding to the last line:\n"+transcript
+	var context := "You are speaking with "+str(listener.role)+" near the village fountain. It is "+greeting().to_lower()+" time in Jakarta. Continue this friendly small talk, responding to the last line. You can change topics naturally among village life, trade, business, faith, culture, history, diplomacy, conflict, science, art, food and nature:\n"+transcript
 	service.request_line(speaker.role,context+news_context(),fallback,ticket)
 
 func receive_line(id: int, role: String, text: String, source: String, detail: String) -> void:
