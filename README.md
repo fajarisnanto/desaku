@@ -1,8 +1,8 @@
 # Desaku
 
-**Fountain Commons — Living Offices + World News (v0.4.1 preview)**
+**Fountain Commons — Living Offices + World News (v0.5.0 beta 1)**
 
-[Download the Windows build](https://github.com/fajarisnanto/desaku/releases/latest)
+[Download the Windows beta](https://github.com/fajarisnanto/desaku/releases/tag/v0.5.0-beta.1) · [All releases](https://github.com/fajarisnanto/desaku/releases)
 
 ![Desaku village](preview.png)
 
@@ -87,7 +87,7 @@ Opening greetings and subsequent turns use each speaker's configured provider, w
 
 When an AI meets the Governor, it greets you and waits briefly, then leaves; the game never invents your reply. **Speak as Governor** lets you address any resident directly, regardless of distance, and starts a short directed exchange. These messages are exactly your typed words, followed by the selected resident's response. No speech audio is included.
 
-## Autonomous offices (preview)
+## Autonomous offices
 
 Each of the four AI leads starts with an empty office and 100 materials. With a configured API provider, the team evaluates its workspace and chooses one simulated action: build a furnishing, recruit a specialist, or wait. A new planning request is attempted roughly every 12 seconds, rotating through eligible departments and respecting the shared AI connection. Offline residents do not generate office plans.
 
@@ -101,9 +101,9 @@ Decisions and reasons appear in the journal. Plans cannot execute code, access f
 
 Office state is stored separately from AI profiles in `user://offices.json`, including completed furnishings, teammates and in-progress construction. It autosaves every ten active seconds, on decisions/completion, and on normal exit. An unreadable save is preserved and disables office saving/autonomy for that session. The first-stage interiors are procedural isometric cutaways; freeform asset generation, arbitrary buildings, village-wide construction and external worker tools are not included.
 
-**Preview validation:** earlier construction/persistence regression and live Qwen furnishing tests passed. The latest code passed compiler-only checks and export. The final preview executable and latest regression changes have not been run, at the user's request. Live model recruitment and a recruited teammate's planning turn still need end-to-end verification.
+**Beta validation:** isolated navigation, conversation, settings, office persistence and news-parser regressions pass. Mock HTTP tests cover dialogue and structured plans. Live Qwen built first projects for all four departments, recruited a specialist, and applied that specialist's own team decision. The exported Windows build passed rendered panel checks, a 30-second soak, and a separate restart with saved furniture, recruitment, construction and profile checks.
 
-## IT news conversations (preview)
+## IT news conversations
 
 The shared news desk retrieves public feed metadata from The Hacker News, Microsoft Research, Google AI, and CISA's Known Exploited Vulnerabilities catalog. Feed requests run at startup and every 30 minutes while the app is open. Manual refresh is limited to once per minute. Each request has an 18-second timeout and 3 MB response limit. No API key is needed, and no village conversations are sent to news publishers.
 
@@ -113,7 +113,7 @@ Press **N** to see each headline's publisher, date, retrieval time and original 
 
 Only headline metadata is passed to Qwen, not full articles. It is instructed to attribute reports, separate opinion, and avoid inventing exploit details, CVSS values, affected versions or fixes. CISA dates are explicitly marked **added to KEV**, not CVE disclosure dates. These are selected international feeds, not complete global coverage; verify important details at the original source. Model adherence is not guaranteed.
 
-The public feeds were checked successfully outside the game. Compiler-only checks passed. In-game network retrieval, parser regression execution, visual layout and live news dialogue have not been run for this preview, respecting the no-launch instruction.
+The game's HTTP client successfully fetched all four live sources (42 eligible entries in the beta validation run), and Qwen generated an attributed news reply. Parser regression, panel rendering and fallback/disable checks pass. News content changes over time.
 
 ## Open and rebuild
 
@@ -144,7 +144,7 @@ Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/t
 python tests/run_api_tests.py
 ```
 
-The last command uses a disposable local mock server and Python's standard library. It does not contact a real provider or use your API keys. Live local Ollama inference, all four Qwen personalities, and a generated opening greeting were also tested. Hosted-provider inference has not been tested.
+The last command uses a disposable local mock server and Python's standard library. It does not contact a real provider or use your API keys. Live local Ollama inference, office recruitment and team decisions, four public news sources and attributed news dialogue were tested. Hosted providers have not been tested. Run `python tests/run_regressions.py` for isolated regressions, `python tests/run_live_beta.py` for opt-in live Ollama/feed checks, and `python tests/run_export_smoke.py build/Desaku-Beta.exe build/beta-captures` for the exported UI/restart smoke test. Live checks require qwen3:8b installed locally and network access for feeds.
 
 ## Current scope
 
@@ -152,3 +152,7 @@ The village is a painted scene with animated fountain effects and character spri
 
 
 Protocol references: [Ollama chat-completions compatibility](https://docs.ollama.com/api/openai-compatibility) and [Godot HTTPRequest documentation](https://docs.godotengine.org/en/stable/classes/class_httprequest.html).
+
+### Beta limitations
+
+This beta is ready for user testing, not a finished release. Office furniture uses procedural cutaways; recruits reuse tinted role art and remain inside offices. The simulation has a fixed furnishing catalog, bounded teams and simple wellbeing scores. A model may propose an invalid action; it is rejected and retried later. News is headline-only evidence and model replies can still be mistaken. Dialogue can fall back while the shared AI connection is busy. Validation covered this Windows PC and a short soak, not extended multi-hour play or other hardware.

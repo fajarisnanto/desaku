@@ -24,7 +24,7 @@ func _ready() -> void:
 func reset_defaults() -> void:
 	profiles.clear()
 	for role in ROLES:
-		profiles[role] = {"mode":0,"endpoint":"http://localhost:11434/v1/chat/completions","model":"","key_env":"VILLAGE_"+role.to_upper()+"_API_KEY","personality":PERSONALITIES[role],"social":true,"timeout_seconds":12,"reasoning_effort":""}
+		profiles[role] = {"mode":0,"endpoint":"http://127.0.0.1:11434/v1/chat/completions","model":"","key_env":"VILLAGE_"+role.to_upper()+"_API_KEY","personality":PERSONALITIES[role],"social":true,"timeout_seconds":12,"reasoning_effort":""}
 
 func normalized(role: String, data: Dictionary) -> Dictionary:
 	var p: Dictionary = profiles[role].duplicate()
@@ -44,7 +44,7 @@ func normalized(role: String, data: Dictionary) -> Dictionary:
 func load_settings() -> void:
 	if not FileAccess.file_exists(config_path):
 		return
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(config_path))
+	var parsed = decode_json(FileAccess.get_file_as_string(config_path))
 	if not parsed is Dictionary:
 		push_warning("Could not read resident profiles from " + ProjectSettings.globalize_path(config_path))
 		return
@@ -158,13 +158,13 @@ func request_line(role: String, context: String, fallback: String, ticket: int, 
 			else:
 				line_ready.emit(ticket,role,fallback,"Fallback",reason)
 			return
-		var data = JSON.parse_string(bytes.get_string_from_utf8())
+		var data = decode_json(bytes.get_string_from_utf8())
 		if planning:
 			var plan: Dictionary = {}
 			if data is Dictionary and data.get("choices") is Array and not data.choices.is_empty():
 				var choice = data.choices[0]
 				if choice is Dictionary and choice.get("message") is Dictionary:
-					var raw = JSON.parse_string(str(choice.message.get("content","")))
+					var raw = decode_json(str(choice.message.get("content","")))
 					if raw is Dictionary:
 						plan = raw
 			plan_ready.emit(ticket,role,plan,"Qwen decision" if not plan.is_empty() else "Invalid plan; no changes made.")
@@ -194,3 +194,9 @@ func extract_answer(data: Variant) -> String:
 	if not content is String:
 		return ""
 	return str(content).replace("\n"," ").replace("\r"," ").strip_edges().trim_prefix('"').trim_suffix('"').substr(0,180)
+
+func decode_json(text: String) -> Variant:
+	var parser := JSON.new()
+	if parser.parse(text) != OK:
+		return null
+	return parser.data

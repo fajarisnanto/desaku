@@ -11,6 +11,7 @@ var log_text: Label
 var log_lines: Array[String] = []
 var selected := "Creative"
 var drafts: Dictionary = {}
+var loaded_profiles: Dictionary = {}
 var draft_keys: Dictionary = {}
 var provider: OptionButton
 var endpoint: LineEdit
@@ -176,7 +177,11 @@ func snapshot() -> Dictionary:
 	return {"mode":provider.selected,"endpoint":endpoint.text.strip_edges(),"model":model.text.strip_edges(),"key_env":key_env.text.strip_edges(),"personality":personality.text.substr(0,4000),"social":social_toggle.button_pressed,"timeout_seconds":int(reply_timeout.value),"reasoning_effort":"none" if reasoning.selected == 1 else ""}
 
 func stash() -> void:
-	drafts[selected] = snapshot()
+	var current := snapshot()
+	if current == loaded_profiles.get(selected,{}):
+		drafts.erase(selected)
+	else:
+		drafts[selected] = current
 	draft_keys[selected] = api_key.text
 
 func select_role(role: String) -> void:
@@ -185,6 +190,7 @@ func select_role(role: String) -> void:
 	load_role()
 
 func load_role() -> void:
+	loaded_profiles[selected] = service.profiles[selected].duplicate(true)
 	var p: Dictionary = drafts.get(selected,service.profiles[selected])
 	provider.select(int(p.mode))
 	endpoint.text = str(p.endpoint)
@@ -233,7 +239,9 @@ func save_current() -> void:
 	if error != OK:
 		feedback.text = "Could not save settings. Check write access to the app data folder."
 		return
-	stash()
+	loaded_profiles[selected] = service.profiles[selected].duplicate(true)
+	drafts.erase(selected)
+	draft_keys[selected] = api_key.text
 	feedback.text = selected+" saved. "+("Offline dialogue is active." if int(p.mode)==0 else "API dialogue is active. Keys are not saved to disk.")
 	if not bool(p.social):
 		for npc in social.active:

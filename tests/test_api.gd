@@ -18,6 +18,12 @@ func ask(p: Dictionary, key := "test-session-key", role := "Creative") -> Array:
 	service.call_deferred("request_line",role,"A neighbor says hello.","Offline fallback line",ticket,p,key)
 	return await service.line_ready
 
+func plan_at(endpoint: String) -> Array:
+	service.profiles.Creative.endpoint = endpoint
+	ticket += 1
+	service.call_deferred("request_plan","Creative","Plan an office improvement.",ticket)
+	return await service.plan_ready
+
 func run() -> void:
 	service = Service.new()
 	service.test_mode = true
@@ -70,6 +76,13 @@ func run() -> void:
 	service.reset_defaults()
 	service.load_settings()
 	check(service.profiles.Creative.mode == 0 and service.profiles.Creative.social == true,"Malformed settings did not preserve safe defaults")
+	service.profiles.Creative = service.normalized("Creative",{"mode":1,"model":"mock-village","endpoint":base+"/plan","reasoning_effort":"none"})
+	service.session_keys.Creative = "test-session-key"
+	result = await plan_at(base+"/plan")
+	check(result[2].get("action") == "build","Office JSON plan was not parsed")
+	for suffix in ["/plan-invalid","/plan-malformed","/plan-slow"]:
+		result = await plan_at(base+suffix)
+		check(result[2].is_empty(),"Invalid office response must not become an action: "+suffix)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(service.config_path))
 	print("API INTEGRATION: ","PASS" if failures.is_empty() else "FAIL"," | authenticated request, response parsing, 401, malformed/empty output, timeout, redirects, validation, persistence, no saved keys, Governor exclusion")
 	quit(0 if failures.is_empty() else 1)

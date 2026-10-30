@@ -21,7 +21,7 @@ func setup(owner_village: Node, office_world: Node) -> void:
 	village = owner_village
 	world = office_world
 	layer = 12
-	village.settings_ui.button("Offices  [O]",Vector2(1080,276),Vector2(190,42),village.settings_ui,func(): open())
+	village.settings_ui.button("Offices  [O]",Vector2(1080,276),Vector2(190,42),village.hud,func(): open())
 	shade = ColorRect.new()
 	shade.color = Color(0.015,0.04,0.06,0.94)
 	shade.size = Vector2(1536,1024)

@@ -26,6 +26,7 @@ var office_world: Node
 var office_ui: CanvasLayer
 var news_feed: Node
 var news_ui: CanvasLayer
+var hud: CanvasLayer
 var plaza := PackedVector2Array([Vector2(475,365),Vector2(680,350),Vector2(768,320),Vector2(895,357),Vector2(1060,365),Vector2(1190,470),Vector2(1160,650),Vector2(1050,755),Vector2(870,825),Vector2(650,825),Vector2(490,760),Vector2(385,650),Vector2(375,475)])
 
 func _ready() -> void:
@@ -47,7 +48,7 @@ func _ready() -> void:
 		residents.append(npc)
 	build_ui()
 	ai_service = AIService.new()
-	ai_service.test_mode = "--self-test" in OS.get_cmdline_user_args() or "--social-test" in OS.get_cmdline_user_args()
+	ai_service.test_mode = "--self-test" in OS.get_cmdline_user_args() or "--social-test" in OS.get_cmdline_user_args() or "--beta-smoke" in OS.get_cmdline_user_args()
 	add_child(ai_service)
 	social = Social.new()
 	add_child(social)
@@ -69,6 +70,10 @@ func _ready() -> void:
 	add_child(news_ui)
 	news_ui.setup(self,news_feed)
 	tree_exiting.connect(func(): office_world.save_world())
+	if "--beta-smoke" in OS.get_cmdline_user_args():
+		var smoke = load("res://scripts/beta_smoke.gd").new()
+		add_child(smoke)
+		smoke.call_deferred("run",self)
 	if "--self-test" in OS.get_cmdline_user_args():
 		run_self_test()
 	if "--social-test" in OS.get_cmdline_user_args():
@@ -197,6 +202,7 @@ func label(text: String, pos: Vector2, size: int, parent: Node, color := Color("
 
 func build_ui() -> void:
 	var ui := CanvasLayer.new()
+	hud = ui
 	add_child(ui)
 	var title := panel(Vector2(25,25),Vector2(343,105),ui)
 	label("F O U N T A I N   C O M M O N S",Vector2(18,15),18,title)

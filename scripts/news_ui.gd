@@ -13,7 +13,7 @@ func setup(owner_village: Node, news_feed: Node) -> void:
 	village=owner_village
 	feed=news_feed
 	layer=13
-	village.settings_ui.button("News desk  [N]",Vector2(1280,276),Vector2(230,42),village.settings_ui,open)
+	village.settings_ui.button("News desk  [N]",Vector2(1280,276),Vector2(230,42),village.hud,open)
 	shade=ColorRect.new()
 	shade.color=Color(0.015,0.04,0.06,0.96)
 	shade.size=Vector2(1536,1024)
@@ -63,7 +63,7 @@ func refresh() -> void:
 	list.clear()
 	visible_items=feed.stories.duplicate(true)
 	for item in visible_items:
-		list.add_item(str(item.source)+" · "+Time.get_datetime_string_from_unix_time(int(item.published)).left(10)+"\n"+str(item.title))
+		list.add_item(str(item.source)+" · "+Time.get_datetime_string_from_unix_time(int(item.published)).left(10)+" — "+str(item.title))
 	selected_url=""
 	open_link.disabled=true
 	detail.text="Select a headline to inspect its source and date.\n\nResidents occasionally discuss these stories in their own voices. Creative considers AI and design; Research considers evidence; Operation considers impact; Maintenance considers security and upkeep.\n\nHeadlines are limited evidence, not full article summaries. These feeds provide international coverage, not an exhaustive worldwide news service."

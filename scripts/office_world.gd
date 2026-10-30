@@ -147,6 +147,8 @@ func request_decision(role: String) -> void:
 	var can_recruit: bool = office.items.size() >= 2 and desks > office.team.size() and office.team.size() < 3 and float(office.materials) >= 20
 	var mission: String = {"Creative":"Design art, stories and welcoming spaces","Research":"Investigate nature and share useful knowledge","Operation":"Coordinate supplies, schedules and community projects","Maintenance":"Maintain tools, paths, lamps and the fountain"}[role]
 	var prompt := "ACTOR: "+pending_actor+". Specialty: "+specialty+". MISSION: "+mission+".\nAssess your actual office below. Choose ONE improvement, explaining the unmet need. Prefer a department-specific station, comfortable surroundings and useful teamwork over duplicate furniture. If there is a specific job to delegate, prepare a desk then recruit. Recruits take their own planning turns and accelerate construction. You may wait when satisfied.\nCURRENT STATE: "+JSON.stringify({"materials":int(office.materials),"completed":office.items,"team":office.team,"wellbeing":metrics(role),"free_slots":free_slots,"recruitment_ready":can_recruit,"last_decision":office.last})+"\nAVAILABLE BUILD ITEMS (only these keys allowed): "+JSON.stringify(available(role))+"\nSPECIALTIES: "+JSON.stringify(SPECIALTIES[role])+"\nJSON fields for build: action=build, item=one available key, slot=one free_slots integer, reason=short specific reason. For recruit (only when recruitment_ready): action=recruit, name=short unique personal name, specialty=exact allowed specialty, reason=specific job. For wait: action=wait, reason=why. Recruitment costs 20 and needs a free desk. Maximum 3 teammates; Governor is never AI. Return only JSON. Do not reuse a completed item or occupied slot."
+	if available(role).is_empty() or free_slots.is_empty():
+		prompt += "\nIMPORTANT: This office cannot build any more furnishings. Choose recruit if recruitment_ready is true and a useful job exists; otherwise choose wait. Do not choose build."
 	service.request_plan(role,prompt,ticket)
 	changed.emit()
 
@@ -270,7 +272,7 @@ func save_world() -> void:
 func load_world() -> void:
 	if not FileAccess.file_exists(save_path):
 		return
-	var data = JSON.parse_string(FileAccess.get_file_as_string(save_path))
+	var data = decode_json(FileAccess.get_file_as_string(save_path))
 	if not data is Dictionary or data.get("version") != 1 or not data.get("offices") is Dictionary:
 		save_error = "Office save could not be read. Existing file preserved; saving disabled for this session."
 		save_blocked = true
@@ -319,3 +321,9 @@ func load_world() -> void:
 			if entry is Dictionary and entry.get("role") in ROLES:
 				history.append({"role":entry.role,"text":str(entry.get("text","")).substr(0,350),"time":str(entry.get("time","")).substr(0,30)})
 
+
+func decode_json(text: String) -> Variant:
+	var parser := JSON.new()
+	if parser.parse(text) != OK:
+		return null
+	return parser.data

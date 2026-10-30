@@ -25,15 +25,23 @@ class Handler(BaseHTTPRequestHandler):
 
             assert body["reasoning_effort"] == "none"
             assert "Creative" in body["messages"][0]["content"]
-            assert body["messages"][1]["content"] == "A neighbor says hello."
+            planning = self.path.startswith("/plan")
+            assert body["messages"][1]["content"] == ("Plan an office improvement." if planning else "A neighbor says hello.")
+            assert body["max_tokens"] == (420 if planning else 96)
         except (ValueError, KeyError, AssertionError):
             self.reply(400, {"error": "Invalid test request"})
             return
         if self.headers.get("Authorization") != "Bearer test-session-key":
             self.reply(401, {"error": "Unauthorized"})
             return
-        if self.path == "/slow":
+        if self.path in ("/slow", "/plan-slow"):
             time.sleep(2)
+        if planning:
+            content = json.dumps({"action":"build","item":"art","slot":0,"reason":"Design workspace"})
+            if self.path == "/plan-invalid": content = "not json"
+            if self.path == "/plan-malformed": content = "[]"
+            self.reply(200, {"choices":[{"message":{"content":content}}]})
+            return
         if self.path == "/redirect":
             self.send_response(302)
             self.send_header("Location", "/v1/chat/completions")
@@ -68,8 +76,8 @@ env = dict(os.environ, VILLAGE_TEST_BASE=f"http://127.0.0.1:{server.server_port}
 try:
     result = subprocess.run([args.godot, "--headless", "--path", str(project), "--script", "res://tests/test_api.gd"], env=env, timeout=45)
     assert result.returncode == 0, f"Godot tests failed: {result.returncode}"
-    assert counts == {"valid": 1, "requests": 6}, counts
-    print("MOCK SERVER: PASS | six expected requests; no redirect or unauthorized extra calls")
+    assert counts == {"valid": 1, "requests": 10}, counts
+    print("MOCK SERVER: PASS | ten dialogue/planning requests; no redirect or unauthorized extra calls")
 finally:
     server.shutdown()
     server.server_close()
